@@ -9,7 +9,8 @@ interface ServiceOptions {
 }
 
 interface GetBlogsParams {
-    isFeatured: boolean,
+    orderBy?: string
+    isFeatured?: boolean,
     search?: string
 }
 
@@ -45,5 +46,16 @@ export const blogService = {
         catch (err) {
             return { data: null, err: { message: "Something want wrong" } }
         }
+    },
+    getSinglePost: async function (id: string) {
+        try {
+            const res = await fetch(`${API_URL}/posts/${id}`);
+
+            const data = await res.json();
+            return { data: data, error: null };
+        } catch (err) {
+            return { data: null, error: { message: "Somethings Wants Wrong!!" } }
+        }
     }
+
 };
