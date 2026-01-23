@@ -1,11 +1,23 @@
+"use client";
 
-// export const dynamic = "force-dynamic";
+import getAllBlogs from "@/actions/blogs/getAllBlogs";
+import { useEffect } from "react";
 
-const AboutPage = async () => {
+interface BlogData {
+    data: {
+        posts: [],
+        totalPosts: number
+    }
+}
 
-    // await new Promise(resolve => setTimeout(resolve, 4000));
+const AboutPage = () => {
 
-    // throw new Error("Somethings Wrong")
+    useEffect(() => {
+        (async () => {
+            const { data } = await getAllBlogs() as BlogData;
+            console.log(data);
+        })()
+    }, [])
 
     return (
         <div>
