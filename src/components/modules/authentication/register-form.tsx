@@ -10,9 +10,19 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { authClient } from "@/lib/auth-client";
 import { useForm } from "@tanstack/react-form"
+import { toast } from "sonner";
+import * as z from "zod";
+
+
+const formSchema = z.object({
+  name: z.string().min(1, "This Field Is Required!!"),
+  email: z.email(),
+  password: z.string().min(12, "minimum length is 12"),
+})
 
 export function RegisterForm({ ...props }: React.ComponentProps<typeof Card>) {
 
@@ -22,11 +32,36 @@ export function RegisterForm({ ...props }: React.ComponentProps<typeof Card>) {
       email: "",
       password: ""
     },
-    onSubmit: async (value) => {
-      console.log("Form Clicked", value.value);
+    validators: {
+      onSubmit: formSchema,
+    },
+    onSubmit: async ({ value }) => {
+      console.log("Form Clicked", value);
+      const toastData = toast.loading("Creating User...");
+      try {
+        const { data, error } = await authClient.signUp.email(value);
+
+        if (error) {
+          toast.error(error.message, { id: toastData });
+          return;
+        }
+
+        toast.success("User Created Successfully", { id: toastData })
+
+        console.log("user Data: ", data);
+      }
+      catch (err) {
+        toast.error("Something wants wrong!!", { id: toastData })
+      }
     }
   });
 
+  const handleGoogleLogin = async () => {
+    const data = await authClient.signIn.social({
+      provider: "google",
+      callbackURL: "http://localhost:3000",
+    })
+  };
 
   return (
     <Card {...props}>
@@ -43,8 +78,9 @@ export function RegisterForm({ ...props }: React.ComponentProps<typeof Card>) {
         }}>
           <FieldGroup>
             <form.Field name="name" children={(field) => {
+              const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
               return (
-                <Field>
+                <Field data-invalid={isInvalid}>
                   <FieldLabel htmlFor={field.name}>Name</FieldLabel>
                   <Input
                     type="text"
@@ -52,13 +88,17 @@ export function RegisterForm({ ...props }: React.ComponentProps<typeof Card>) {
                     name={field.name}
                     value={field.state.value}
                     onChange={(e) => field.handleChange(e.target.value)}
+                    aria-invalid={isInvalid}
                   />
+                  {isInvalid && <FieldError errors={field.state.meta.errors} />}
                 </Field>
               )
             }} />
             <form.Field name="email" children={(field) => {
+              const isInvalid =
+                field.state.meta.isTouched && !field.state.meta.isValid
               return (
-                <Field>
+                <Field data-invalid={isInvalid}>
                   <FieldLabel htmlFor={field.name}>Email</FieldLabel>
                   <Input
                     type="email"
@@ -66,13 +106,17 @@ export function RegisterForm({ ...props }: React.ComponentProps<typeof Card>) {
                     name={field.name}
                     value={field.state.value}
                     onChange={(e) => field.handleChange(e.target.value)}
+                    aria-invalid={isInvalid}
                   />
+                  {isInvalid && <FieldError errors={field.state.meta.errors} />}
                 </Field>
               )
             }} />
             <form.Field name="password" children={(field) => {
+              const isInvalid =
+                field.state.meta.isTouched && !field.state.meta.isValid
               return (
-                <Field>
+                <Field data-invalid={isInvalid}>
                   <FieldLabel htmlFor={field.name}>Password</FieldLabel>
                   <Input
                     type="password"
@@ -80,15 +124,26 @@ export function RegisterForm({ ...props }: React.ComponentProps<typeof Card>) {
                     name={field.name}
                     value={field.state.value}
                     onChange={(e) => field.handleChange(e.target.value)}
+                    aria-invalid={isInvalid}
                   />
+                  {isInvalid && <FieldError errors={field.state.meta.errors} />}
                 </Field>
               )
             }} />
           </FieldGroup>
         </form>
       </CardContent>
-      <CardFooter className="flex justify-end">
-        <Button form="login-form" type="submit">Submit</Button>
+      <CardFooter className="flex flex-col justify-center gap-4">
+        <Button
+          form="login-form"
+          type="submit"
+          className="w-full cursor-pointer"
+        >
+          Submit
+        </Button>
+        <Button className="w-full cursor-pointer" onClick={handleGoogleLogin} variant="outline" type="button">
+          Continue with Google
+        </Button>
       </CardFooter>
     </Card>
   )
